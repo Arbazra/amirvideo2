@@ -99,27 +99,22 @@ let toggleCamera = async (e) => {
     }
 };
 
-let muteAllExceptMe = async () => {
-    // Mute audio for all remote users except local user
-    for (let uid in remoteUsers) {
-        if (remoteUsers.hasOwnProperty(uid) && remoteUsers[uid].uid !== localTracks[0].getId()) {
-            remoteUsers[uid].audioTrack && remoteUsers[uid].audioTrack.setEnabled(false);
-        }
-    }
-};
-
-let unmuteAll = async () => {
-    // Unmute audio for all remote users
-    for (let uid in remoteUsers) {
-        if (remoteUsers.hasOwnProperty(uid)) {
-            remoteUsers[uid].audioTrack && remoteUsers[uid].audioTrack.setEnabled(true);
-        }
-    }
-};
-
 document.getElementById('join-btn').addEventListener('click', joinStream);
 document.getElementById('leave-btn').addEventListener('click', leaveAndRemoveLocalStream);
 document.getElementById('mic-btn').addEventListener('click', toggleMic);
 document.getElementById('camera-btn').addEventListener('click', toggleCamera);
-document.getElementById('mute-all-btn').addEventListener('click', muteAllExceptMe);
-document.getElementById('unmute-all-btn').addEventListener('click', unmuteAll);
+
+// Screen sharing functionality
+document.getElementById('screenshare-btn').addEventListener('click', async () => {
+    if (!localTracks.length) return;
+
+    try {
+        const screenTrack = await AgoraRTC.createScreenVideoTrack();
+        await client.unpublish(localTracks);
+        localTracks.forEach(track => track.close());
+        localTracks = [screenTrack];
+        await client.publish(localTracks);
+    } catch (error) {
+        console.error('Failed to start screen sharing:', error);
+    }
+});
